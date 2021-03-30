@@ -2,7 +2,10 @@ package com.appstore.app.starter.advice;
 
 import com.appstore.app.starter.anno.Decrypt;
 import com.appstore.app.starter.config.EncryptProperties;
+import com.appstore.app.starter.encrypt.EncryptHelper;
 import com.appstore.app.starter.utils.AESUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.core.MethodParameter;
@@ -26,8 +29,11 @@ import java.lang.reflect.Type;
 @EnableConfigurationProperties(EncryptProperties.class)
 @RestControllerAdvice
 public class DecryptRequestAdvice extends RequestBodyAdviceAdapter {
+    private Logger log = LoggerFactory.getLogger(this.getClass());
     @Resource
-    EncryptProperties encryptProperties;
+    private EncryptProperties encryptProperties;
+    @Resource
+    private EncryptHelper encryptHelper;
 
     @Override
     public boolean supports(MethodParameter methodParameter, Type targetType, Class<? extends HttpMessageConverter<?>> converterType) {
@@ -42,7 +48,7 @@ public class DecryptRequestAdvice extends RequestBodyAdviceAdapter {
         byte[] body = new byte[inputMessage.getBody().available()];
         inputMessage.getBody().read(body);
         try {
-            byte[] decrypt = AESUtils.decrypt(body, encryptProperties.getKey().getBytes());
+            byte[] decrypt = encryptHelper.decrypt(body, encryptProperties.getKey().getBytes());
             final ByteArrayInputStream bais = new ByteArrayInputStream(decrypt);
             return new HttpInputMessage() {
                 @Override

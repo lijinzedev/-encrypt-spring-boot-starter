@@ -2,9 +2,12 @@ package com.appstore.app.starter.advice;
 
 import com.appstore.app.starter.anno.Encrypt;
 import com.appstore.app.starter.config.EncryptProperties;
+import com.appstore.app.starter.encrypt.EncryptHelper;
 import com.appstore.app.starter.model.R;
 import com.appstore.app.starter.utils.AESUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.core.MethodParameter;
@@ -25,10 +28,12 @@ import javax.annotation.Resource;
 @EnableConfigurationProperties(EncryptProperties.class)
 @RestControllerAdvice
 public class EncryptResponseAdvice implements ResponseBodyAdvice<Object> {
+    private Logger log = LoggerFactory.getLogger(this.getClass());
     private ObjectMapper om = new ObjectMapper();
     @Resource
-    EncryptProperties encryptProperties;
-
+    private EncryptProperties encryptProperties;
+    @Resource
+    private EncryptHelper encryptHelper;
     @Override
     public boolean supports(MethodParameter returnType, Class<? extends HttpMessageConverter<?>> converterType) {
         if (encryptProperties.isGlobal()) {
@@ -42,7 +47,11 @@ public class EncryptResponseAdvice implements ResponseBodyAdvice<Object> {
         byte[] keyBytes = encryptProperties.getKey().getBytes();
         try {
             if (body != null) {
-                return R.ok(AESUtils.encrypt("返回成功".getBytes(), keyBytes), AESUtils.encrypt(om.writeValueAsBytes(body), keyBytes));
+                String encrypt = encryptHelper.encrypt(om.writeValueAsBytes(body), keyBytes);
+                if (encryptProperties.isShowLog()) {
+                    log.info("Pre-encrypted data：{}，After encryption：{}", body, encrypt);
+                }
+                return R.ok(encryptHelper.encrypt("返回成功".getBytes(), keyBytes), encrypt);
             }
         } catch (Exception e) {
             e.printStackTrace();

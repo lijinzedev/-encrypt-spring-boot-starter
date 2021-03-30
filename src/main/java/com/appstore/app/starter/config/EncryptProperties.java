@@ -7,6 +7,15 @@ public class EncryptProperties {
     private final static String DEFAULT_KEY = "hbtc6210b";
     private String key = DEFAULT_KEY;
     private boolean global = false;
+    private boolean showLog = false;
+
+    public boolean isShowLog() {
+        return showLog;
+    }
+
+    public void setShowLog(boolean showLog) {
+        this.showLog = showLog;
+    }
 
     public boolean isGlobal() {
         return global;
